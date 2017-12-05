@@ -28,9 +28,9 @@ contract('BullTokenCrowdsale', function([
   const rate = new BigNumber(500);
   const cap = new BigNumber(web3.toWei("0.8", 'ether'));
   const validInvestment = minimumInvestment.add(new BigNumber(100000));
-  const tokenAmount = minimumInvestment * rate;
 
   let whitelist;
+  let token;
 
   before(async function () {
     //Advance to the next block to correctly read time in the solidity "now" function interpreted by testrpc
@@ -51,6 +51,7 @@ contract('BullTokenCrowdsale', function([
     );
 
     whitelist = await Whitelist.new({from: owner});
+    token = await BullToken.new({from: owner});
 
     this.crowdsale = await BullTokenCrowdsale.new(
       this.startTime,
@@ -59,12 +60,14 @@ contract('BullTokenCrowdsale', function([
       goal,
       cap,
       minimumInvestment,
+      token.address,
       fundDistributor.address,
       whitelist.address,
       {from: owner}
     );
 
-    this.token = BullToken.at(await this.crowdsale.token());
+    await token.approve(this.crowdsale.address, rate.mul(cap));
+
     this.vault = BullTokenRefundVault.at(await this.crowdsale.vault());
     this.vaultAddress = await this.crowdsale.vault();
 
@@ -109,24 +112,18 @@ contract('BullTokenCrowdsale', function([
       await increaseTimeTo(this.startTime)
     });
 
-    it("should be possible to buy tokens from owner account", async function () {
-      await this.crowdsale.sendTransaction({from: owner, value: validInvestment});
-      var balance = await this.token.balanceOf(owner);
-      expect(balance).to.bignumber.equal(validInvestment * rate);
-    });
-
     it("should be possible to buy tokens from a different account", async function() {
       await this.crowdsale.sendTransaction({ from: purchaser, value: validInvestment });
-      var balance =  await this.token.balanceOf(purchaser);
+      var balance =  await token.balanceOf(purchaser);
       expect(balance).to.bignumber.equal(validInvestment * rate);
     });
 
     it("should be possible to buy tokens from two different accounts", async function() {
       await this.crowdsale.sendTransaction({ from: purchaser, value: validInvestment });
-      await this.crowdsale.sendTransaction({ from: owner, value: validInvestment });
+      await this.crowdsale.sendTransaction({ from: purchaser2, value: validInvestment });
 
-      var balance = await this.token.balanceOf(purchaser);
-      var balance2 =  await this.token.balanceOf(owner);
+      var balance = await token.balanceOf(purchaser);
+      var balance2 =  await token.balanceOf(purchaser2);
 
       expect(balance).to.bignumber.equal(validInvestment * rate);
       expect(balance2).to.bignumber.equal(validInvestment * rate);
@@ -150,7 +147,7 @@ contract('BullTokenCrowdsale', function([
     it("should NOT be possible to transfer tokens ", async function () {
       await this.crowdsale.sendTransaction({ from: purchaser, value: validInvestment });
       try {
-        await this.token.transfer(purchaser2, validInvestment, {from: purchaser});
+        await token.transfer(purchaser2, validInvestment, {from: purchaser});
         assert.fail();
       } catch(error) {
         assertRevert(error);
@@ -158,9 +155,9 @@ contract('BullTokenCrowdsale', function([
     });
 
     it("total supply should be assigned on token create", async function () {
-      var totalSupply = await this.token.totalSupply();
-      var initialSupply = await this.token.INITIAL_SUPPLY();
-      var exponent = await this.token.decimals();
+      var totalSupply = await token.totalSupply();
+      var initialSupply = await token.INITIAL_SUPPLY();
+      var exponent = await token.decimals();
       expect(totalSupply).to.bignumber.equal(initialSupply * Math.pow(10, exponent));
     });
 
@@ -253,7 +250,7 @@ contract('BullTokenCrowdsale', function([
         });
 
         it("gives the purchaser the corresponding amount of BULL", async function () {
-          const purchasersBullBalance = await this.token.balanceOf(purchaser);
+          const purchasersBullBalance = await token.balanceOf(purchaser);
           const totalSupply = await this.crowdsale.cap();
           expect(purchasersBullBalance).to.bignumber.equal(totalSupply * rate);
         });

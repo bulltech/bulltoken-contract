@@ -1,8 +1,9 @@
 var BullTokenCrowdsale = artifacts.require("BullTokenCrowdsale");
+var BullToken = artifacts.require("BullToken");
 var Whitelist = artifacts.require("Whitelist");
 var FundDistributor = artifacts.require("FundDistributor");
 
-module.exports = function(deployer, network, accounts) {
+module.exports = function (deployer, network, accounts) {
   const start = web3.eth.getBlock(web3.eth.blockNumber).timestamp + 90;
   const end = start + (86400 * 30); // 30 days
   const rate = new web3.BigNumber(500);
@@ -21,19 +22,27 @@ module.exports = function(deployer, network, accounts) {
     marketingWallet,
     administrationWallet,
     earlyBackersWallet
-  ).then(function() {
-    deployer.deploy(Whitelist).then(function() {
-      deployer.deploy(
-        BullTokenCrowdsale,
-        start,
-        end,
-        rate,
-        goal,
-        cap,
-        minimumInvestment,
-        FundDistributor.address,
-        Whitelist.address
-      );
+  ).then(async function () {
+    await deployer.deploy(Whitelist);
+    await deployer.deploy(BullToken);
+    await deployer.deploy(
+      BullTokenCrowdsale,
+      start,
+      end,
+      rate,
+      goal,
+      cap,
+      minimumInvestment,
+      BullToken.address,
+      FundDistributor.address,
+      Whitelist.address
+    );
+  });
+
+  deployer.then(function() {
+    BullToken.deployed().then(function(instance) {
+      instance.approve(BullTokenCrowdsale.address, rate.mul(cap));
     });
   });
+
 };

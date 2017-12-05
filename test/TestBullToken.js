@@ -6,6 +6,7 @@ var BullToken = artifacts.require("./BullToken.sol");
 contract('BullToken', function ([owner, acc]) {
   let token;
   let ownerTokenBalance;
+  let amount = 100;
 
   beforeEach(async function () {
     token = await BullToken.new({from: owner});
@@ -69,9 +70,9 @@ contract('BullToken', function ([owner, acc]) {
     });
 
     it('should be able to transfer if transfers are unpaused', async function () {
-      let amount = 100;
+      await token.approve(owner, amount);
       let balance0 = await token.balanceOf(owner);
-      await token.transfer(acc, amount);
+      await token.transferFrom(owner, acc, amount);
       let balance0AfterTransfer = await token.balanceOf(owner);
       expect(balance0AfterTransfer).to.bignumber.equal(balance0.sub(amount));
 
@@ -80,8 +81,6 @@ contract('BullToken', function ([owner, acc]) {
     });
 
     it('should be able to transfer after transfers are paused and unpaused', async function () {
-      let amount = new BigNumber(100);
-
       await token.pause();
       await token.unpause();
 
@@ -100,7 +99,7 @@ contract('BullToken', function ([owner, acc]) {
     it('should throw an error trying to transfer while transactions are paused', async function () {
       await token.pause();
       try {
-        await token.transfer(acc, 100);
+        await token.transfer(acc, amount);
         assert.fail('should have thrown before');
       } catch (error) {
         assertRevert(error);
@@ -110,7 +109,7 @@ contract('BullToken', function ([owner, acc]) {
     it('should throw an error trying to transfer from another account while transactions are paused', async function () {
       await token.pause();
       try {
-        await token.transferFrom(owner, acc, 100);
+        await token.transferFrom(owner, acc, amount);
         assert.fail('should have thrown before');
       } catch (error) {
         assertRevert(error);
@@ -123,7 +122,7 @@ contract('BullToken', function ([owner, acc]) {
         expect(await token.transferEnabled()).to.equal(false);
 
         try {
-          await token.transferFrom(owner, acc, 100);
+          await token.transferFrom(owner, acc, amount);
           assert.fail('should have thrown before');
         } catch (error) {
           assertRevert(error);
@@ -141,7 +140,7 @@ contract('BullToken', function ([owner, acc]) {
         expect(await token.transferEnabled()).to.equal(false);
 
         try {
-          await token.transferFrom(owner, acc, 100);
+          await token.transferFrom(owner, acc, amount);
           assert.fail('should have thrown before');
         } catch (error) {
           assertRevert(error);
@@ -169,5 +168,29 @@ contract('BullToken', function ([owner, acc]) {
       });
 
     });
+
   });
+
+  describe("holdable", async function () {
+
+    it('should add holder on transfer', async function () {
+      await token.transfer(acc, amount);
+      let holder = await token.holders(0);
+      let isHolderStatus = await token.isHolder(acc);
+      expect(holder).to.equal(acc);
+      expect(isHolderStatus).to.equal(true);
+    });
+
+    it('should add holder on transferFrom', async function () {
+      await token.approve(owner, amount);
+      await token.transferFrom(owner, acc, amount);
+      let holder = await token.holders(0);
+      let isHolderStatus = await token.isHolder(acc);
+      expect(holder).to.equal(acc);
+      expect(isHolderStatus).to.equal(true);
+    });
+
+  });
+
+
 });

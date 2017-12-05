@@ -62,6 +62,6 @@ contract FundDistributor is Ownable {
   }
 
   function percentage(uint8 percentage, uint256 number) internal pure returns(uint256) {
-    return number.div(100).mul(percentage);
+    return number.mul(percentage).div(100);
   }
 }

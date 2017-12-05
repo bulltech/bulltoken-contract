@@ -11,6 +11,9 @@ contract BullToken is BurnableToken, PausableToken {
   uint256 public constant INITIAL_SUPPLY = 55000000;
   bool public transferEnabled;
 
+  mapping (address => bool) public isHolder;
+  address [] public holders;
+
   function BullToken() public {
     totalSupply = INITIAL_SUPPLY * 10 ** uint256(decimals);
     balances[msg.sender] = totalSupply;
@@ -34,6 +37,13 @@ contract BullToken is BurnableToken, PausableToken {
  */
   function transfer(address to, uint256 value) public returns (bool) {
     require(transferEnabled || msg.sender == owner);
+
+    // Update the list of holders for new address
+    if (!isHolder[to]) {
+      holders.push(to);
+      isHolder[to] = true;
+    }
+
     return super.transfer(to, value);
   }
 
@@ -45,6 +55,13 @@ contract BullToken is BurnableToken, PausableToken {
   */
   function transferFrom(address from, address to, uint256 value) public returns (bool) {
     require(transferEnabled || from == owner);
+
+    // Update the list of holders for new address
+    if (!isHolder[to]) {
+      holders.push(to);
+      isHolder[to] = true;
+    }
+
     return super.transferFrom(from, to, value);
   }
 

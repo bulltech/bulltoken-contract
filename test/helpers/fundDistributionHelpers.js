@@ -27,16 +27,16 @@ export default class FundDistributionHelper {
     const earlyBackersPercentageCut = 17;
 
     let distributions = {
-      development: totalBalance.div(100).floor().mul(developmentPercentageCut).floor(),
-      marketing: totalBalance.div(100).floor().mul(marketingPercentageCut).floor(),
-      administration: totalBalance.div(100).floor().mul(administrationPercentageCut).floor(),
-      earlyBackers: totalBalance.div(100).floor().mul(earlyBackersPercentageCut).floor(),
-    }
+      development: totalBalance.mul(developmentPercentageCut).floor().div(100).floor(),
+      marketing: totalBalance.mul(marketingPercentageCut).floor().div(100).floor(),
+      administration: totalBalance.mul(administrationPercentageCut).floor().div(100).floor(),
+      earlyBackers: totalBalance.mul(earlyBackersPercentageCut).floor().div(100).floor(),
+    };
 
     const remaining = totalBalance.sub(distributions.development)
                              .sub(distributions.marketing)
                              .sub(distributions.administration)
-                             .sub(distributions.earlyBackers)
+                             .sub(distributions.earlyBackers);
 
 
     // Give the remaining wei from math imprecision to marketing

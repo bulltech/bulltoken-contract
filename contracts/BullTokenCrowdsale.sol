@@ -18,13 +18,14 @@ contract BullTokenCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     uint256 _goal,
     uint256 _cap,
     uint256 _minimumInvestment,
+    address _tokenAddress,
     address _wallet,
     address _whitelistAddress
   ) public
     CappedCrowdsale(_cap)
     FinalizableCrowdsale()
     RefundableCrowdsale(_goal)
-    BurnableCrowdsale(_startTime, _endTime, _rate, _wallet)
+    BurnableCrowdsale(_startTime, _endTime, _rate, _wallet, _tokenAddress)
   {
     //As goal needs to be met for a successful crowdsale
     //the value needs to less or equal than a cap which is limit for accepted funds
@@ -35,7 +36,7 @@ contract BullTokenCrowdsale is CappedCrowdsale, RefundableCrowdsale {
   }
 
   function createTokenContract() internal returns (BurnableToken) {
-    return new BullToken();
+    return BullToken(tokenAddress);
   }
 
   // fallback function can be used to buy tokens
@@ -66,7 +67,8 @@ contract BullTokenCrowdsale is CappedCrowdsale, RefundableCrowdsale {
     // update state
     weiRaised = weiRaised.add(weiAmount);
 
-    token.transfer(beneficiary, tokens);
+    token.transferFrom(owner, beneficiary, tokens);
+
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     forwardFundsToWallet(weiAmount);
   }
