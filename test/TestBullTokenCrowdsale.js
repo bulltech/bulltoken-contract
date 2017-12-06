@@ -6,6 +6,7 @@ var FundDistributor = artifacts.require("./FundDistributor.sol");
 var Whitelist = artifacts.require("./Whitelist.sol");
 var BullTokenCrowdsale = artifacts.require("./BullTokenCrowdsale.sol");
 var BullTokenRefundVault = artifacts.require("./BullTokenRefundVault.sol");
+var DummySelfDestruct = artifacts.require("./test_helpers/DummySelfDestruct.sol");
 
 // Insert
 //eval(pry.it);
@@ -365,6 +366,28 @@ contract('BullTokenCrowdsale', function([
              .to.be.bignumber.equal(after.marketing);
       expect(before.earlyBackers.add(expectedGains.earlyBackers))
              .to.be.bignumber.equal(after.earlyBackers);
+    });
+
+    it("should empty the vault a second time if ether has been placed back into the vault", async function () {
+      // First purchase goes into vault
+      await this.crowdsale.sendTransaction({ from: purchaser2, value: minimumInvestment });
+
+      // Second purchase passes the goal and triggers the vault transfer
+      await this.crowdsale.sendTransaction({ from: purchaser3, value: goal });
+
+      // Someone transfers ether directly to the vault using self destruct
+      let dummySelfDestruct = await DummySelfDestruct.new();
+      await dummySelfDestruct.sendTransaction({ from: purchaser3, value: minimumInvestment });
+      await dummySelfDestruct.destruct(this.vaultAddress);
+
+      // Check to make sure vault is not empty
+      expect(await web3.eth.getBalance(this.vaultAddress)).to.be.bignumber.equal(minimumInvestment);
+
+      // Third purchase should also trigger the vault transfer
+      await this.crowdsale.sendTransaction({ from: purchaser2, value: minimumInvestment });
+
+      // Check if vault has been emptied
+      expect(await web3.eth.getBalance(this.vaultAddress)).to.be.bignumber.equal(new BigNumber(0));
     });
   });
 

@@ -97,7 +97,7 @@ contract BullTokenCrowdsale is CappedCrowdsale, RefundableCrowdsale {
 
   function forwardFundsToWallet(uint256 amount) internal {
     if (goalReached() && vault.balance > 0) {
-      vault.close();
+      vault.forwardFunds();
     }
 
     if (goalReached()) {

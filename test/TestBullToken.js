@@ -116,57 +116,46 @@ contract('BullToken', function ([owner, acc]) {
       }
     });
 
-    describe("transferrable", function () {
+  });
 
-      it('should be non transferrable by default', async function () {
-        expect(await token.transferEnabled()).to.equal(false);
+  describe("transferrable", function () {
 
-        try {
-          await token.transferFrom(owner, acc, amount);
-          assert.fail('should have thrown before');
-        } catch (error) {
-          assertRevert(error);
-        }
-      });
+    it('should be non transferrable by default', async function () {
+      expect(await token.transferEnabled()).to.equal(false);
 
-      it('should become transferrable when transfers enabled by owner', async function () {
-        await token.enableTransfers({from: owner});
-        expect(await token.transferEnabled()).to.equal(true);
-      });
+      try {
+        await token.transferFrom(owner, acc, amount);
+        assert.fail('should have thrown before');
+      } catch (error) {
+        assertRevert(error);
+      }
+    });
 
-      it('should become non-transferrable when transfers disabled by owner', async function () {
-        await token.enableTransfers({from: owner});
-        await token.disableTransfers({from: owner});
-        expect(await token.transferEnabled()).to.equal(false);
+    it('should become transferrable when transfers enabled by owner', async function () {
+      await token.enableTransfers({from: owner});
+      expect(await token.transferEnabled()).to.equal(true);
+    });
 
-        try {
-          await token.transferFrom(owner, acc, amount);
-          assert.fail('should have thrown before');
-        } catch (error) {
-          assertRevert(error);
-        }
-      });
+    it('should become non-transferrable when transfers disabled by owner', async function () {
+      await token.enableTransfers({from: owner});
+      await token.disableTransfers({from: owner});
+      expect(await token.transferEnabled()).to.equal(false);
 
-      it('should not be possible to enable transfers as other than owner', async function () {
-        try {
-          await token.enableTransfers({from: acc});
-          assert.fail('should have thrown before');
-        } catch (error) {
-          assertRevert(error);
-        }
-      });
+      try {
+        await token.transferFrom(owner, acc, amount);
+        assert.fail('should have thrown before');
+      } catch (error) {
+        assertRevert(error);
+      }
+    });
 
-      it('should not be possible to disable transfers as other than owner', async function () {
-        await token.enableTransfers({from: owner});
-
-        try {
-          await token.disableTransfers({from: acc});
-          assert.fail('should have thrown before');
-        } catch (error) {
-          assertRevert(error);
-        }
-      });
-
+    it('should not be possible to enable transfers as other than owner', async function () {
+      try {
+        await token.enableTransfers({from: acc});
+        assert.fail('should have thrown before');
+      } catch (error) {
+        assertRevert(error);
+      }
     });
 
   });
@@ -191,6 +180,5 @@ contract('BullToken', function ([owner, acc]) {
     });
 
   });
-
 
 });

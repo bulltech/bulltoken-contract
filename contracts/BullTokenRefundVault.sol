@@ -15,4 +15,9 @@ contract BullTokenRefundVault is RefundVault {
     // in the transaction
     wallet.call.value(this.balance)();
   }
+
+  function forwardFunds() onlyOwner public {
+    require(this.balance > 0);
+    wallet.call.value(this.balance)();
+  }
 }

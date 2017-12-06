@@ -24,7 +24,7 @@ module.exports = function(deployer, network, addresses) {
 
   console.log('>> Unlocking account ' + config.from);
   console.log(web3.eth.personal);
-  web3.eth.personal.unlockAccount(config.from, process.env.PASSWORD, 0);
+  web3.personal.unlockAccount(config.from, process.env.PASSWORD, 0);
 }
 
   console.log('>> Deploying migration');
